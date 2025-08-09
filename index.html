@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earn Rewards App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f2f5;
+        }
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .withdrawal-method {
+            border: 1px solid #e5e7eb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+        }
+        .withdrawal-method.selected {
+            border-color: #2563eb;
+            background-color: #f0f7ff;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: #4CAF50;
+            color: white;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen">
+        <!-- Auth Section -->
+        <div id="authSection" class="p-4">
+            <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+                <div class="flex gap-4 mb-4">
+                    <button onclick="showLogin()" class="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Login</button>
+                    <button onclick="showSignup()" class="flex-1 py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">Sign Up</button>
+                </div>
+                <form id="loginForm" class="hidden">
+                    <input type="text" placeholder="Username" id="loginUsername" class="w-full p-2 mb-4 border rounded">
+                    <input type="password" placeholder="Password" id="loginPassword" class="w-full p-2 mb-4 border rounded">
+                    <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Login</button>
+                </form>
+                <form id="signupForm" class="hidden">
+                    <input type="text" placeholder="Username" id="signupUsername" class="w-full p-2 mb-4 border rounded">
+                    <input type="password" placeholder="Password" id="signupPassword" class="w-full p-2 mb-4 border rounded">
+                    <button type="submit" class="w-full py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700">Sign Up</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Section -->
+        <div id="mainSection" class="hidden p-4">
+            <div class="max-w-md mx-auto space-y-4">
+                <!-- User Stats -->
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-semibold" id="usernameDisplay"></h2>
+                            <p class="text-gray-600">Coins: <span id="coinBalance">0</span></p>
+                        </div>
+                        <button onclick="logout()" class="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Watch Ad Section -->
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h2 class="text-lg font-semibold mb-2">Watch Ads to Earn</h2>
+                    <div class="text-center">
+                        <div id="timer" class="timer mb-4">Ready!</div>
+                        <button id="watchAdBtn" onclick="watchAd()" class="w-full py-3 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Watch Ad (+1 Coin)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Withdrawal Section -->
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h2 class="text-lg font-semibold mb-2">Withdraw Earnings</h2>
+                    <p class="text-sm text-gray-600 mb-4">Minimum withdrawal: 5000 coins (₹4000)</p>
+                    <div class="withdrawal-methods mb-4">
+                        <div class="withdrawal-method" onclick="selectWithdrawalMethod('upi')">
+                            <input type="radio" name="withdrawalMethod" value="upi" id="upi">
+                            <label for="upi" class="ml-2">UPI</label>
+                            <div class="upi-details hidden mt-2">
+                                <input type="text" placeholder="Enter UPI ID" class="w-full p-2 border rounded" id="upiId">
+                            </div>
+                        </div>
+                        <div class="withdrawal-method" onclick="selectWithdrawalMethod('bank')">
+                            <input type="radio" name="withdrawalMethod" value="bank" id="bank">
+                            <label for="bank" class="ml-2">Bank Transfer</label>
+                            <div class="bank-details hidden mt-2">
+                                <input type="text" placeholder="Account Number" class="w-full p-2 mb-2 border rounded" id="accountNumber">
+                                <input type="text" placeholder="IFSC Code" class="w-full p-2 mb-2 border rounded" id="ifscCode">
+                                <input type="text" placeholder="Account Holder Name" class="w-full p-2 border rounded" id="accountName">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="initiateWithdrawal()" class="w-full py-3 px-6 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Withdraw
+                    </button>
+                </div>
+
+                <!-- Leaderboard -->
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h2 class="text-lg font-semibold mb-2">Top Earners</h2>
+                    <div id="leaderboard" class="space-y-2"></div>
+                </div>
+
+                <!-- Support -->
+                <div class="bg-white p-4 rounded-xl shadow-md">
+                    <h2 class="text-lg font-semibold mb-2">Support</h2>
+                    <a href="https://t.me/Ashookchinnu" class="flex items-center justify-center py-3 px-6 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        <i class="bi bi-telegram me-2"></i> Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        let currentUser = null;
+        let cooldownTime = 90; // 1.5 minutes in seconds
+        let timeLeft = 0;
+        let timer = null;
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let withdrawalRequests = JSON.parse(localStorage.getItem('withdrawalRequests')) || [];
+        let isAdminLoggedIn = false;
+
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('signupForm').classList.add('hidden');
+        }
+
+        function showSignup() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('signupForm').classList.remove('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('authSection').classList.toggle('hidden', !!currentUser);
+            document.getElementById('mainSection').classList.toggle('hidden', !currentUser);
+            if (currentUser) {
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+                document.getElementById('coinBalance').textContent = currentUser.coins;
+            }
+        }
+
+        document.getElementById('signupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            if (users[username]) {
+                alert('Username already exists!');
+                return;
+            }
+            users[username] = { username, password, coins: 0 };
+            alert('Sign up successful! Please login.');
+            showLogin();
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const user = users[username];
+            if (!user || user.password !== password) {
+                alert('Invalid username or password!');
+                return;
+            }
+            currentUser = user;
+            updateUI();
+            generateLeaderboard();
+        });
+
+        function logout() {
+            currentUser = null;
+            updateUI();
+        }
+
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            const watchAdBtn = document.getElementById('watchAdBtn');
+            
+            if (timeLeft > 0) {
+                timerElement.textContent = `Wait ${timeLeft}s`;
+                watchAdBtn.classList.add('disabled');
+                timeLeft--;
+            } else {
+                timerElement.textContent = 'Ready!';
+                watchAdBtn.classList.remove('disabled');
+                clearInterval(timer);
+            }
+        }
+
+        function watchAd() {
+            if (timeLeft > 0) return;
+            
+            window.open('https://www.profitableratecpm.com/isrp4ucsgf?key=90953e4e8000f0dcd34d5a80aece14a5', '_blank');
+            currentUser.coins++;
+            updateUI();
+            
+            timeLeft = cooldownTime;
+            timer = setInterval(updateTimer, 1000);
+        }
+
+        function selectWithdrawalMethod(method) {
+            document.querySelectorAll('.withdrawal-method').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('.upi-details, .bank-details').forEach(el => el.classList.add('hidden'));
+            
+            const selectedMethod = document.querySelector(`[value="${method}"]`).closest('.withdrawal-method');
+            selectedMethod.classList.add('selected');
+            selectedMethod.querySelector(`.${method}-details`).classList.remove('hidden');
+        }
+
+        function initiateWithdrawal() {
+            if (currentUser.coins < 5000) {
+                showNotification('Minimum withdrawal is 5000 coins!', 'error');
+                return;
+            }
+
+            const selectedMethod = document.querySelector('input[name="withdrawalMethod"]:checked');
+            if (!selectedMethod) {
+                showNotification('Please select a withdrawal method!', 'error');
+                return;
+            }
+
+            let withdrawalDetails = {
+                method: selectedMethod.value,
+                amount: currentUser.coins,
+                username: currentUser.username,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            };
+
+            if (selectedMethod.value === 'upi') {
+                const upiId = document.getElementById('upiId').value;
+                if (!upiId) {
+                    showNotification('Please enter UPI ID!', 'error');
+                    return;
+                }
+                withdrawalDetails.upiId = upiId;
+            } else {
+                const accountNumber = document.getElementById('accountNumber').value;
+                const ifscCode = document.getElementById('ifscCode').value;
+                const accountName = document.getElementById('accountName').value;
+                if (!accountNumber || !ifscCode || !accountName) {
+                    showNotification('Please fill all bank details!', 'error');
+                    return;
+                }
+                withdrawalDetails.bankDetails = { accountNumber, ifscCode, accountName };
+            }
+
+            withdrawalRequests.push(withdrawalDetails);
+            currentUser.coins = 0;
+            users[currentUser.username] = currentUser;
+            saveToLocalStorage();
+            updateUI();
+            showNotification('Withdrawal request submitted successfully!');
+        }
+
+        function withdraw() {
+            if (currentUser.coins < 5000) {
+                alert('Minimum withdrawal is 5000 coins!');
+                return;
+            }
+            alert(`Withdrawal request for ${currentUser.coins} coins (₹${(currentUser.coins * 0.8).toFixed(2)}) has been submitted!`);
+        }
+
+        function generateLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+            
+            const fakeUsers = [
+                {username: "CoinMaster", coins: 25000},
+                {username: "TopEarner", coins: 22000},
+                {username: "AdKing", coins: 20000},
+                {username: "RewardPro", coins: 18500},
+                {username: "EarnMaster", coins: 15000}
+            ];
+
+            fakeUsers.forEach((user, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+                entry.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="font-bold mr-2">${index + 1}.</span>
+                        <span>${user.username}</span>
+                    </div>
+                    <span>${user.coins} coins</span>
+                `;
+                leaderboard.appendChild(entry);
+            });
+        }
+
+        function approveWithdrawal(timestamp) {
+            const request = withdrawalRequests.find(req => req.timestamp === timestamp);
+            if (request) {
+                request.status = 'approved';
+                saveToLocalStorage();
+                updateAdminPanel();
+                showNotification('Withdrawal approved!');
+            }
+        }
+
+        function rejectWithdrawal(timestamp) {
+            const request = withdrawalRequests.find(req => req.timestamp === timestamp);
+            if (request) {
+                request.status = 'rejected';
+                const user = users[request.username];
+                if (user) {
+                    user.coins += request.amount;
+                    saveToLocalStorage();
+                }
+                updateAdminPanel();
+                showNotification('Withdrawal rejected and coins returned!');
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('withdrawalRequests', JSON.stringify(withdrawalRequests));
+        }
+
+        // Refresh leaderboard every 30 minutes
+        setInterval(generateLeaderboard, 30 * 60 * 1000);
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
